@@ -29,7 +29,7 @@ kubectl create ns mssql
 kubectl apply -f m3-storageclass.yaml
 
 # Create a secret for a password before creating the mssql pod
-kubectl create secret generic mssql --from-literal=SA_PASSWORD="Diamanti1!!!" -n mssql
+kubectl create secret generic mssql --from-literal=SA_PASSWORD="<STRING>" -n mssql
 
 # Deploy the container
 kubectl create -f mssql2019-deploy-privileged.yaml -n mssql
