@@ -1,0 +1,120 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+ name: "mssql2019"
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     app: "mssql2019"
+ template:
+   metadata:
+     labels:
+       app: "mssql2019"
+     annotations:
+       #diamanti.com/endpoint0: '{"endpointId":"mssql-ep","perfTier":"high"}'  
+       # if you need ot make it scalable. Recommendation is to create a dedicated network and use that network in annotation.
+       # diamanti.com/endpoint0: '{"network":"mssql-net","perfTier":"high"}'  
+   spec:
+     serviceAccountName: "mssql2019-sa"
+     containers:
+     - name: "mssql2019"
+       image: "mcr.microsoft.com/mssql/server:2019-GA-ubuntu-16.04"
+       ports:
+       - name: "ms"
+         containerPort: 1433
+         protocol: "TCP"
+       env:
+       - name: "ACCEPT_EULA"
+         value: "Y"
+       - name: "SA_PASSWORD"
+         valueFrom:
+           secretKeyRef:
+             name: mssql
+             key: SA_PASSWORD
+       - name: "MSSQL_AGENT_ENABLED"
+         value: "true"
+       - name: "MSSQL_DATA_DIR"
+         value: /var/opt/mssql/data
+       - name: "MSSQL_LOG_DIR"
+         value: /var/opt/mssql/log
+       - name: "MSSQL_MEMORY_LIMIT_MB"
+         value: "4096"
+       volumeMounts:
+       - name: "data"
+         mountPath: "/var/opt/mssql/"
+       - name: "tempdb"
+         mountPath: "/var/opt/tempdb"
+       securityContext:
+         allowPrivilegeEscalation: true
+       resources:
+         limits: {}
+         requests:
+           cpu: "1000m"
+           memory: "4096Mi"
+     securityContext:
+       runAsUser: 0
+       fsGroup: 0
+       runAsGroup: 0
+       supplementalGroups: []
+     volumes:
+       - name: data
+         persistentVolumeClaim:
+           claimName: mssql2019-data
+       - name: tempdb
+         persistentVolumeClaim:
+           claimName: mssql2019-tempdb
+---
+apiVersion: "v1"
+kind: "PersistentVolumeClaim"
+metadata:
+ annotations: {}
+ name: "mssql2019-data"
+spec:
+ accessModes:
+ - "ReadWriteOnce"
+ storageClassName: "high-m3"
+ resources:
+   limits: {}
+   requests:
+     storage: "20Gi"
+---
+apiVersion: "v1"
+kind: "PersistentVolumeClaim"
+metadata:
+ annotations: {}
+ name: "mssql2019-tempdb"
+spec:
+ accessModes:
+ - "ReadWriteOnce"
+ storageClassName: "high"
+ resources:
+   limits: {}
+   requests:
+     storage: "10Gi"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+ annotations: {}
+ name: "mssql2019"
+ labels:
+   app: "mssql2019"
+spec:
+ clusterIP: "None"
+ externalIPs: []
+ loadBalancerSourceRanges: []
+ type: "ClusterIP"
+ selector:
+   app: "mssql2019"
+ ports:
+ - name: "web"
+   port: 1433
+---
+metadata:
+ name: "mssql2019-sa"
+ labels: {}
+apiVersion: "v1"
+kind: "ServiceAccount"
+imagePullSecrets:
+- name: "federated-reg-secret"

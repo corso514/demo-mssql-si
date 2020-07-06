@@ -1,0 +1,17 @@
+{
+    "kind": "StorageClass",
+    "apiVersion": "storage.k8s.io/v1",
+    "metadata": {
+        "name": "high-m3"
+    },
+    "provisioner": "dcx.csi.diamanti.com",
+    "parameters": {
+        "driver": "diamanti.com/volume",
+        "encryption": "false",
+        "fsType": "ext4",
+        "mirrorCount": "3",
+        "perfTier": "high"
+    },
+    "reclaimPolicy": "Delete",
+    "volumeBindingMode": "Immediate"
+}
